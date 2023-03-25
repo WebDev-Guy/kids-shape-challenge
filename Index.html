@@ -1,0 +1,361 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bouncing Balls Game</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            padding: 0;
+            background-color: #000;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        #game-scoreboard {
+            position: absolute;
+            right: 16px;
+            top: 16px;
+            background-color: rgba(255,255,255, .1);
+            color: #fff;
+            padding: 10px;
+            width: 120px;
+            font-size: 18px;
+            pointer-events: none;
+        }
+
+        #timer {
+            font-size: .6em;
+            text-transform: uppercase;
+            margin: 6px 0;
+        }
+
+            #timer timer-left {
+                text-transform: none;
+            }
+
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #gameCanvas {
+            border: 1px solid #000;
+            cursor: crosshair;
+        }
+
+        #final-score-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background-color: rgba(0, 0, 0, .9);
+            color: white;
+            place-items: center;
+        }
+
+        #reset {
+            padding: 16px 32px;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            color: #000;
+            font-size: 1.5em;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="game-scoreboard">
+            <div id="score-counter">Score: <span id="score">0</span></div>
+            <div id="timer">Time left: <span id="time-left">--</span></div>
+        </div>
+        <canvas id="gameCanvas"></canvas>
+        <div id="final-score-container">
+            <h1 id="final-score-counter">Time's up! Your final score is  <span id="final-score"></span></h1>
+            <div id="actions">
+                <button id="reset" type="button" onclick="resetGame()">Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const timeLeftSetting = 60;
+        const balls = [];
+        const confettiParticles = [];
+        const pointLabels = [];
+        const numBalls = 20;
+        const ballRadius = 30;
+        const speedMultiplier = 1; // Changed from 0.8 to 2
+        let baseScore = 1;
+        let animationActive = true;
+        const specialBallMultiplier = 5;
+        const confettioBonus = baseScore + 1;
+        let timeLeft = timeLeftSetting;
+
+        document.addEventListener('contextmenu', event => identify(event));
+
+        class PointLabel {
+            constructor(x, y, points) {
+                this.x = x;
+                this.y = y;
+                this.points = points;
+                this.opacity = 1;
+                this.fadeSpeed = 0.01;
+            }
+
+            draw() {
+                ctx.globalAlpha = this.opacity;
+                ctx.font = '24px Arial';
+                ctx.fillStyle = 'white';
+                ctx.fillText(`+${this.points}`, this.x, this.y);
+                ctx.globalAlpha = 1;
+            }
+
+            update() {
+                this.opacity -= this.fadeSpeed;
+            }
+        }
+
+        class Ball {
+            constructor(x, y, dx, dy, color, special, shape) {
+                this.x = x;
+                this.y = y;
+                this.dx = dx;
+                this.dy = dy;
+                this.color = color;
+                this.special = special;
+                this.shape = shape;
+
+                if (special) {
+                    this.colorChangeSpeed = 10;
+                    this.colorChangeCounter = 0;
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                switch (this.shape) {
+                    case 'circle':
+                        ctx.arc(this.x, this.y, ballRadius, 0, Math.PI * 2);
+                        break;
+                    case 'square':
+                        ctx.rect(this.x - ballRadius, this.y - ballRadius, ballRadius * 2, ballRadius * 2);
+                        break;
+                    case 'triangle':
+                        ctx.moveTo(this.x, this.y - ballRadius);
+                        ctx.lineTo(this.x + ballRadius, this.y + ballRadius);
+                        ctx.lineTo(this.x - ballRadius, this.y + ballRadius);
+                        ctx.closePath();
+                        break;
+                    case 'oval':
+                        ctx.ellipse(this.x, this.y, ballRadius, ballRadius * 0.6, 0, 0, Math.PI * 2);
+                        break;
+                    case 'rectangle':
+                        ctx.rect(this.x - ballRadius, this.y - ballRadius * 0.6, ballRadius * 2, ballRadius * 1.2);
+                        break;
+                }
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+
+            update() {
+                if (this.x + ballRadius > canvas.width || this.x - ballRadius < 0) {
+                    this.dx = -this.dx;
+                }
+                if (this.y + ballRadius > canvas.height || this.y - ballRadius < 0) {
+                    this.dy = -this.dy;
+                }
+                this.x += this.dx;
+                this.y += this.dy;
+
+                if (this.special) {
+                    this.colorChangeCounter += 1;
+                    if (this.colorChangeCounter >= this.colorChangeSpeed) {
+                        this.color = randomColor();
+                        this.colorChangeCounter = 0;
+                    }
+                    this.dx += (Math.random() - 0.5) * 0.1;
+                    this.dy += (Math.random() - 0.5) * 0.1;
+                }
+            }
+        }
+
+        class Confetti {
+            constructor(x, y, special, color) {
+                this.x = x;
+                this.y = y;
+                this.size = Math.random() * 5 + 2;
+
+                if (special) {
+                    this.size * 2.4;
+                }
+
+                this.color = special ? randomColor() : color; // Use ball color for non-special confetti
+                this.dx = (Math.random() - 0.5) * (special ? 10 : 5);
+                this.dy = -Math.random() * (special ? 10 : 5);
+                this.gravity = (special ? 0.05 : 0.1);
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.closePath();
+            }
+
+            update() {
+                this.x += this.dx;
+                this.y += this.dy;
+                this.dy += this.gravity;
+            }
+        }
+
+
+        function createConfetti(x, y, special, color) {
+            let count = 50;
+
+            if (special) {
+                count = count * specialBallMultiplier;
+            }
+
+            for (let i = 0; i < count; i++) {
+                confettiParticles.push(new Confetti(x, y, special, color));
+            }
+        }
+
+        function randomColor() {
+            const colors = ['red', 'blue', 'green', 'yellow', 'orange', 'purple'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        function randomShape() {
+            const shapes = ['circle', 'square', 'triangle', 'oval', 'rectangle'];
+            return shapes[Math.floor(Math.random() * shapes.length)];
+        }
+
+        for (let i = 0; i < numBalls; i++) {
+            createBall(i);
+        }
+
+        function createBall(index) {
+            const x = Math.random() * (canvas.width - 2 * ballRadius) + ballRadius;
+            const y = Math.random() * (canvas.height - 2 * ballRadius) + ballRadius;
+            const dx = (Math.random() - 0.5) * 4 * speedMultiplier;
+            const dy = (Math.random() - 0.5) * 4 * speedMultiplier;
+            const color = randomColor();
+            const special = index % 200 === 0;
+            const shape = randomShape();
+            balls.push(new Ball(x, y, dx, dy, color, special, shape));
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            balls.forEach(ball => {
+                ball.draw();
+                ball.update();
+            });
+
+            confettiParticles.forEach((confetti, i) => {
+                confetti.draw();
+                confetti.update();
+
+                if (confetti.y > canvas.height) {
+                    confettiParticles.splice(i, 1);
+                }
+            });
+
+            if (!isConfettiAnimationComplete()) {
+                baseScore = confettioBonus;
+            } else {
+                baseScore = baseScore;
+            }
+
+            pointLabels.forEach((label, i) => {
+                label.draw();
+                label.update();
+
+                if (label.opacity <= 0) {
+                    pointLabels.splice(i, 1);
+                }
+            });
+
+            if (animationActive) {
+                requestAnimationFrame(animate);
+            }
+        }
+
+        canvas.addEventListener('click', (e) => {
+            identify(e);
+        });
+
+        function identify(e) {
+            // Prevent default behavior of right-click and middle-click
+            e.preventDefault();
+
+            const canvasRect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - canvasRect.left;
+            const mouseY = e.clientY - canvasRect.top;
+            let ballClicked = false;
+
+            balls.forEach((ball, i) => {
+                if (ballClicked) return;
+                const dx = mouseX - ball.x;
+                const dy = mouseY - ball.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < ballRadius) {
+                    balls.splice(i, 1);
+                    const points = ball.special ? specialBallMultiplier : baseScore;
+                    incrementScore(points);
+                    createBall(i);
+                    createConfetti(ball.x, ball.y, ball.special, ball.color); // Call createConfetti on click
+                    pointLabels.push(new PointLabel(ball.x, ball.y, points)); // Add the point label
+                    ballClicked = true;
+                }
+            });
+        }
+
+        function incrementScore(points) {
+            const scoreElement = document.getElementById("score");
+            let score = parseInt(scoreElement.textContent);
+            score += points;
+            timeLeft += points;
+            scoreElement.textContent = score;
+        }
+
+        function isConfettiAnimationComplete() {
+            return confettiParticles.length === 0;
+        }
+
+        function countdown() {
+            if (timeLeft > 0) {
+                timeLeft -= 1;
+                document.getElementById("timer").textContent = timeLeft;
+                setTimeout(countdown, 1000);
+            } else {
+                animationActive = false;
+                setTimeout(function () {
+                    alert("Time's up! Your final score is " + document.getElementById("score").textContent);
+                    location.reload();
+                }, 1000);
+            }
+        }
+
+        countdown();
+        animate();
+    </script>
+</body>
+</html>
