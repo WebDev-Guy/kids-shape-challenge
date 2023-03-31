@@ -32,7 +32,7 @@
             margin: 6px 0;
         }
 
-            #timer timer-left {
+            #timer time-left {
                 text-transform: none;
             }
 
@@ -57,6 +57,8 @@
             background-color: rgba(0, 0, 0, .9);
             color: white;
             place-items: center;
+            justify-content: center;
+            flex-direction: column;
         }
 
         #reset {
@@ -77,7 +79,8 @@
         </div>
         <canvas id="gameCanvas"></canvas>
         <div id="final-score-container">
-            <h1 id="final-score-counter">Time's up! Your final score is  <span id="final-score"></span></h1>
+            <h1 id="final-score-counter">Time is up!</h1>
+            <h2>Your final score is <span id="final-score"></span></h2>
             <div id="actions">
                 <button id="reset" type="button" onclick="resetGame()">Play Again</button>
             </div>
@@ -95,7 +98,7 @@
         const confettiParticles = [];
         const pointLabels = [];
         const numBalls = 20;
-        const ballRadius = 30;
+        const ballRadius = 45;
         const speedMultiplier = 1; // Changed from 0.8 to 2
         let baseScore = 1;
         let animationActive = true;
@@ -222,6 +225,9 @@
             }
         }
 
+        function resetGame() {
+            location.reload();
+        }
 
         function createConfetti(x, y, special, color) {
             let count = 50;
@@ -302,7 +308,6 @@
         });
 
         function identify(e) {
-            // Prevent default behavior of right-click and middle-click
             e.preventDefault();
 
             const canvasRect = canvas.getBoundingClientRect();
@@ -343,13 +348,13 @@
         function countdown() {
             if (timeLeft > 0) {
                 timeLeft -= 1;
-                document.getElementById("timer").textContent = timeLeft;
+                document.getElementById("time-left").textContent = timeLeft;
                 setTimeout(countdown, 1000);
             } else {
                 animationActive = false;
                 setTimeout(function () {
-                    alert("Time's up! Your final score is " + document.getElementById("score").textContent);
-                    location.reload();
+                    document.getElementById('final-score-container').style.display = 'flex';
+                    document.getElementById('final-score').textContent = document.getElementById("score").textContent;
                 }, 1000);
             }
         }
