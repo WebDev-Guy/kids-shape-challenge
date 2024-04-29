@@ -1,11 +1,27 @@
-const GAME_SETTINGS = {
-    canvasWidth: window.innerWidth,
-    canvasHeight: window.innerHeight,
-    numBalls: 15,
-    ballRadius: 60,
-    speedMultiplier: 1.6,
-    specialBallMultiplier: 5,
-    baseScore: 1,
-    timeLeftSetting: 90, // Time in seconds for the game duration
-    multiplierScoreChance: 0.1 // Chance for a ball to be a multiplier ball
+export const GAME_SETTINGS = {
+    timeLeftSetting: 90,
+
+    CANVAS: {
+        width: window.innerWidth,
+        height: window.innerHeight
+    },
+
+    BALLS: {
+        radius: 60,
+        maxNumberOnCanvas: 10,
+        speedMultiplier: 1.6,
+        bonusProbability: 0.2
+    },
+
+    SCORING: {
+        baseScore: 1,
+        bonusScore: 5,
+        bonus: 0.1,
+        penalty: -1
+    },
+
+    CONFETTI: {
+        velocity: 8,
+        alphaDecay: 1.3
+    }
 };

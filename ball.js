@@ -1,6 +1,8 @@
-// Ball.js
-class Ball {
-    constructor(x, y, dx, dy, color, special, shape) {
+import { randomColor, randomShape } from './utils.js'; 
+import { GAME_SETTINGS } from './settings.js';
+
+export class Ball {
+    constructor(x, y, dx, dy, color, special, shape, canvas) {
         this.x = x;
         this.y = y;
         this.dx = dx;
@@ -8,81 +10,68 @@ class Ball {
         this.color = color;
         this.special = special;
         this.shape = shape;
-        this.colorChangeSpeed = special ? 10 : 0;
-        this.colorChangeCounter = 0;
+        this.canvas = canvas;
+        this.radius = GAME_SETTINGS.BALLS.radius;  // Assuming GAME_SETTINGS is globally accessible or passed to constructor
     }
 
     draw(ctx) {
         ctx.beginPath();
-        this.drawShape(ctx);
+
+        switch (this.shape) {
+            case 'circle':
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                break;
+            case 'square':
+                ctx.rect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
+                break;
+            case 'triangle':
+                ctx.moveTo(this.x, this.y - this.radius);
+                ctx.lineTo(this.x + this.radius, this.y + this.radius);
+                ctx.lineTo(this.x - this.radius, this.y + this.radius);
+                ctx.closePath();
+                break;
+            case 'oval':
+                ctx.ellipse(this.x, this.y, this.radius * 1.2, this.radius * 0.6, 0, 0, Math.PI * 2);
+                break;
+            case 'rectangle':
+                ctx.rect(this.x - this.radius, this.y - this.radius * 0.5, this.radius * 2, this.radius);
+                break;
+        }
+
         ctx.fillStyle = this.color;
         ctx.fill();
     }
 
-    drawShape(ctx) {
-        switch (this.shape) {
-            case 'circle':
-                ctx.arc(this.x, this.y, GAME_SETTINGS.ballRadius, 0, Math.PI * 2);
-                break;
-            case 'square':
-                ctx.rect(this.x - GAME_SETTINGS.ballRadius, this.y - GAME_SETTINGS.ballRadius, GAME_SETTINGS.ballRadius * 2, GAME_SETTINGS.ballRadius * 2);
-                break;
-            case 'triangle':
-                ctx.moveTo(this.x, this.y - GAME_SETTINGS.ballRadius);
-                ctx.lineTo(this.x + GAME_SETTINGS.ballRadius, this.y + GAME_SETTINGS.ballRadius);
-                ctx.lineTo(this.x - GAME_SETTINGS.ballRadius, this.y + GAME_SETTINGS.ballRadius);
-                ctx.closePath();
-                break;
-            case 'oval':
-                ctx.ellipse(this.x, this.y, GAME_SETTINGS.ballRadius, GAME_SETTINGS.ballRadius * 0.6, 0, 0, Math.PI * 2);
-                break;
-            case 'rectangle':
-                ctx.rect(this.x - GAME_SETTINGS.ballRadius, this.y - GAME_SETTINGS.ballRadius * 0.5, GAME_SETTINGS.ballRadius * 2, GAME_SETTINGS.ballRadius);
-                break;
-        }
-    }
-
-    update(canvas) {
-        this.boundaryCheck(canvas);
-        this.move();
-        this.changeColorOnSpecial();
-    }
-
-    boundaryCheck(canvas) {
-        if (this.x + GAME_SETTINGS.ballRadius > canvas.width || this.x - GAME_SETTINGS.ballRadius < 0) {
+    update() {
+        // Boundary checks
+        if (this.x + this.radius > this.canvas.width || this.x - this.radius < 0) {
             this.dx = -this.dx;
         }
-        if (this.y + GAME_SETTINGS.ballRadius > canvas.height || this.y - GAME_SETTINGS.ballRadius < 0) {
+        if (this.y + this.radius > this.canvas.height || this.y - this.radius < 0) {
             this.dy = -this.dy;
         }
-    }
 
-    move() {
+        // Update position
         this.x += this.dx;
         this.y += this.dy;
     }
 
-    changeColorOnSpecial() {
-        if (this.special) {
-            this.colorChangeCounter++;
-            if (this.colorChangeCounter >= this.colorChangeSpeed) {
-                this.color = randomColor();
-                this.colorChangeCounter = 0;
-            }
-        }
+    hitTest(x, y) {
+        // Calculate the distance from the point to the center of the ball
+        const distance = Math.sqrt((this.x - x) ** 2 + (this.y - y) ** 2);
+        // Check if the distance is less than the radius, which means the point is inside the ball
+        return distance <= this.radius;
     }
 }
 
-// Export the Ball class and a function to spawn a ball
-export { Ball, spawnBall };
-
-function spawnBall(canvas, settings) {
-    const x = Math.random() * (canvas.width - 2 * settings.ballRadius) + settings.ballRadius;
-    const y = Math.random() * (canvas.height - 2 * settings.ballRadius) + settings.ballRadius;
-    const dx = (Math.random() - 0.5) * 4 * settings.speedMultiplier;
-    const dy = (Math.random() - 0.5) * 4 * settings.speedMultiplier;
+export function spawnBall(canvas) {
+    const x = Math.random() * (canvas.width - GAME_SETTINGS.BALLS.radius * 2) + GAME_SETTINGS.BALLS.radius;
+    const y = Math.random() * (canvas.height - GAME_SETTINGS.BALLS.radius * 2) + GAME_SETTINGS.BALLS.radius;
+    const dx = (Math.random() - 0.5) * GAME_SETTINGS.BALLS.speedMultiplier;
+    const dy = (Math.random() - 0.5) * GAME_SETTINGS.BALLS.speedMultiplier;
     const color = randomColor();
-    const special = Math.random() < settings.multiplierScoreChance;
+    const special = Math.random() < GAME_SETTINGS.BALLS.bonusProbability;
     const shape = randomShape();
-    return new Ball(x, y, dx, dy, color, special, shape);
+
+    return new Ball(x, y, dx, dy, color, special, shape, canvas);
 }
