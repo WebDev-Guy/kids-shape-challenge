@@ -1,6 +1,5 @@
-// game.js
 import { GAME_SETTINGS } from './settings.js';
-import { spawnBall, Ball } from './ball.js';
+import { spawnShape, Shape } from './shape.js';
 import { initEvents } from './events.js';
 import { updateScoreDisplay, startCountdown } from './score.js';
 import { randomColor, randomShape } from './utils.js';
@@ -11,38 +10,38 @@ class Game {
         this.ctx = this.canvas.getContext('2d');
         this.canvas.width = GAME_SETTINGS.CANVAS.width;
         this.canvas.height = GAME_SETTINGS.CANVAS.height;
-        this.balls = [];
-        this.confetti = [];  // Ensure this is initialized before events are attached
+        this.shapes = [];
+        this.confetti = [];
         this.score = 0;
         this.scoreElement = document.getElementById('score');
         this.timerElement = document.getElementById('time-left');
         this.timeLeft = GAME_SETTINGS.timeLeftSetting
-        this.initBalls();
+        this.initShapes();
         initEvents(this.canvas, this);
         updateScoreDisplay(this.scoreElement, this.score);
         startCountdown(this.timerElement, this);
     }
 
-    initBalls() {
-        for (let i = 0; i < GAME_SETTINGS.BALLS.maxNumberOnCanvas; i++) {
-            this.balls.push(spawnBall(this.canvas));
+    initShapes() {
+        for (let i = 0; i < GAME_SETTINGS.SHAPES.maxNumberOnCanvas; i++) {
+            this.shapes.push(spawnShape(this.canvas));
         }
     }
 
-    createBall(){
-        const x = Math.random() * (this.canvas.width - this.radius * 2) + this.radius;
-        const y = Math.random() * (this.canvas.height - this.radius * 2) + this.radius;
-        const dx = (Math.random() - 0.5) * GAME_SETTINGS.BALLS.speedMultiplier;
-        const dy = (Math.random() - 0.5) * GAME_SETTINGS.BALLS.speedMultiplier;
-        const color = randomColor(); // Assumes randomColor() is defined in utils.js or similar
-        const special = Math.random() < GAME_SETTINGS.BALLS.bonusProbability; // Chance to be a special ball
-        const shape = randomShape(); // Assumes randomShape() is defined in utils.js or similar
+    createShape(){
+        const x = Math.random() * (this.canvas.width - GAME_SETTINGS.SHAPES.radius * 2) + GAME_SETTINGS.SHAPES.radius;
+        const y = Math.random() * (this.canvas.height - GAME_SETTINGS.SHAPES.radius * 2) + GAME_SETTINGS.SHAPES.radius;
+        const dx = (Math.random() - 0.5) * GAME_SETTINGS.SHAPES.speedMultiplier;
+        const dy = (Math.random() - 0.5) * GAME_SETTINGS.SHAPES.speedMultiplier;
+        const color = randomColor();
+        const special = Math.random() < GAME_SETTINGS.SHAPES.bonusProbability;
+        const shape = randomShape();
 
-        return new Ball(x, y, dx, dy, color, special, shape, this.canvas);
+        return new Shape(x, y, dx, dy, color, special, shape, this.canvas);
     }
 
-    spawnBall() {
-        return this.createBall(this.canvas);
+    spawnShape() {
+        return this.createShape(this.canvas);
     }
 
     updateScore(points) {
@@ -53,12 +52,11 @@ class Game {
     animate() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        this.balls.forEach(ball => {
-            ball.update();  // Update ball's position
-            ball.draw(this.ctx);  // Draw the ball
+        this.shapes.forEach(shape => {
+            shape.update();
+            shape.draw(this.ctx);
         });
 
-        // Code to handle confetti animation
         for (let i = this.confetti.length - 1; i >= 0; i--) {
             if (this.confetti[i].alpha <= 0) {
                 this.confetti.splice(i, 1);

@@ -1,7 +1,7 @@
-import { randomColor, randomShape } from './utils.js'; 
+import { randomColor, randomShape } from './utils.js';
 import { GAME_SETTINGS } from './settings.js';
 
-export class Ball {
+export class Shape {
     constructor(x, y, dx, dy, color, special, shape, canvas) {
         this.x = x;
         this.y = y;
@@ -11,7 +11,7 @@ export class Ball {
         this.special = special;
         this.shape = shape;
         this.canvas = canvas;
-        this.radius = GAME_SETTINGS.BALLS.radius;  // Assuming GAME_SETTINGS is globally accessible or passed to constructor
+        this.radius = GAME_SETTINGS.SHAPES.radius;
     }
 
     draw(ctx) {
@@ -64,14 +64,14 @@ export class Ball {
     }
 }
 
-export function spawnBall(canvas) {
-    const x = Math.random() * (canvas.width - GAME_SETTINGS.BALLS.radius * 2) + GAME_SETTINGS.BALLS.radius;
-    const y = Math.random() * (canvas.height - GAME_SETTINGS.BALLS.radius * 2) + GAME_SETTINGS.BALLS.radius;
-    const dx = (Math.random() - 0.5) * GAME_SETTINGS.BALLS.speedMultiplier;
-    const dy = (Math.random() - 0.5) * GAME_SETTINGS.BALLS.speedMultiplier;
+export function spawnShape(canvas) {
+    const x = Math.random() * (canvas.width - GAME_SETTINGS.SHAPES.radius * 2) + GAME_SETTINGS.SHAPES.radius;
+    const y = Math.random() * (canvas.height - GAME_SETTINGS.SHAPES.radius * 2) + GAME_SETTINGS.SHAPES.radius;
+    const dx = (Math.random() - 0.5) * GAME_SETTINGS.SHAPES.speedMultiplier;
+    const dy = (Math.random() - 0.5) * GAME_SETTINGS.SHAPES.speedMultiplier;
     const color = randomColor();
-    const special = Math.random() < GAME_SETTINGS.BALLS.bonusProbability;
+    const special = Math.random() < GAME_SETTINGS.SHAPES.bonusProbability;
     const shape = randomShape();
 
-    return new Ball(x, y, dx, dy, color, special, shape, canvas);
+    return new Shape(x, y, dx, dy, color, special, shape, canvas);
 }

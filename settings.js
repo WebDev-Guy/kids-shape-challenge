@@ -6,7 +6,7 @@ export const GAME_SETTINGS = {
         height: window.innerHeight
     },
 
-    BALLS: {
+    SHAPES: {
         radius: 60,
         maxNumberOnCanvas: 10,
         speedMultiplier: 1.6,
@@ -21,7 +21,7 @@ export const GAME_SETTINGS = {
     },
 
     CONFETTI: {
-        velocity: 8,
-        alphaDecay: 1.3
+        velocity: 200,
+        alphaDecay: 10
     }
 };
