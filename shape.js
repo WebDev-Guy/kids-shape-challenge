@@ -12,9 +12,11 @@ export class Shape {
         this.shape = shape;
         this.canvas = canvas;
         this.radius = GAME_SETTINGS.SHAPES.radius;
+        this.lastBlink = Date.now();
     }
 
     draw(ctx) {
+        ctx.fillStyle = this.color;
         ctx.beginPath();
 
         switch (this.shape) {
@@ -38,7 +40,6 @@ export class Shape {
                 break;
         }
 
-        ctx.fillStyle = this.color;
         ctx.fill();
     }
 
@@ -54,6 +55,13 @@ export class Shape {
         // Update position
         this.x += this.dx;
         this.y += this.dy;
+
+        // Check if it's time to blink
+        const now = Date.now();
+        if (this.special && now - this.lastBlink >= GAME_SETTINGS.SCORING.blinkInterval) {
+            this.color = randomColor(); // Change to a new random color
+            this.lastBlink = now; // Reset the timer
+        }
     }
 
     hitTest(x, y) {

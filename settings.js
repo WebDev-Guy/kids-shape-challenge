@@ -1,5 +1,5 @@
 export const GAME_SETTINGS = {
-    timeLeftSetting: 90,
+    timeLeftSetting: 60,
 
     CANVAS: {
         width: window.innerWidth,
@@ -17,7 +17,8 @@ export const GAME_SETTINGS = {
         baseScore: 1,
         bonusScore: 5,
         bonus: 0.1,
-        penalty: -1
+        penalty: -1,
+        bonusBlinkInterval: 200
     },
 
     CONFETTI: {

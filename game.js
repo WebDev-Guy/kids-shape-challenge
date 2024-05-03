@@ -28,7 +28,7 @@ class Game {
         }
     }
 
-    createShape(){
+    createShape() {
         const x = Math.random() * (this.canvas.width - GAME_SETTINGS.SHAPES.radius * 2) + GAME_SETTINGS.SHAPES.radius;
         const y = Math.random() * (this.canvas.height - GAME_SETTINGS.SHAPES.radius * 2) + GAME_SETTINGS.SHAPES.radius;
         const dx = (Math.random() - 0.5) * GAME_SETTINGS.SHAPES.speedMultiplier;
